@@ -1,0 +1,12 @@
+Nombre: Vicente Pacheco
+Rol: 201673597-6
+
+Para ejecutar el programa se deben seguir los siguientes pasos:
+- Abrir una terminal dentro de la carpeta "IAA".
+- Escribir el comando "make" para compilar.
+- Escribir el comando "./MilkCollection" para ejecutar el programa.
+- El programa pedirá el nombre de la instancia para procesar, por lo que se debe ingresar una de las 22 instancias
+(desde la instancia1 a la instancia22) que se encuentran dentro de la carpeta "Instancias". Se debe ingresar el nombre 
+de la instancia sin la extensión ".dat".
+- Luego, se ejecuta todo el código y como resultado se obtiene un archivo con el nombre de la instancia con la
+extensión ".out". Estos archivos generados son guardados dentro de la carpeta "Salidas".

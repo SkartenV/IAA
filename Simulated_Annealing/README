@@ -1,0 +1,30 @@
+Nombre: Vicente Pacheco
+Rol: 201673597-6
+
+Para ejecutar el programa se deben seguir los siguientes pasos:
+- Abrir una terminal dentro de la carpeta "Simulated_Annealing".
+- Escribir el comando "make" para compilar.
+- Para ejecutar el programa, se deben definir ciertos parámetros en la ejecución, por lo que la línea de ejecución
+quedaría de la siguiente manera:
+
+./SimulatedAnnealing NombreInstancia TemperaturaInicial TasaDecrecimiento NumIteraciones IteracionesParaCambio Semilla
+
+En donde NombreInstancia es el nombre de la instancia (con el .dat), la TemperaturaInicial es la temperatura con la cual
+parte el algoritmo, la TasaDecrecimiento es la tasa con la que disminuye la temperatura, NumIteraciones es la cantidad de
+iteraciones que realizará Simulated Annealing, IteracionesParaCambio es el número de iteraciones que se requieren para 
+cambiar la temperatura (para multiplicarla por la tasa de decrecimiento) y la Semilla es el número que representa a la
+semilla. Un ejemplo de ejecución es el siguiente:
+
+./SimulatedAnnealing instancia1.dat 500 0.99 100000 100 1
+
+En donde:
+
+NombreInstancia: instancia1.dat
+TemperaturaInicial: 500
+TasaDecrecimiento: 0.99
+NumIteraciones: 100000
+IteracionesParaCambio: 100
+Semilla: 1
+
+- Luego, se ejecuta todo el código y como resultado se obtiene un archivo con el nombre de la instancia con la
+extensión ".out". Estos archivos generados son guardados dentro de la carpeta "Salidas".
