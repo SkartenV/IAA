@@ -555,96 +555,94 @@ int main(int argc, char **argv){
     
     FuncionEvaluacion = S_best;
 
+    // --------------------------------------------- Iterated Local Search --------------------------------------------- //
+
     vector <int> RutaPerturbada;
+    vector <int> MejorRuta = NewRutas;
     RutaPerturbada = Perturbacion(NewRutas, CantidadNodos);
     
-    for(i=0;i<RutaPerturbada.size();i++){
-        cout << RutaPerturbada[i] << "-";
-    }
-    S_new = 0;
-    for(x=0; (unsigned)x<MovimientoRuta.size()-1; x++){
+    int MejorFuncionEvaluacion = FuncionEvaluacion;
+    int CriterioAceptacion = 0, ContFactibilidad = 0;
 
-        NodoActual = MovimientoRuta[x];
-        NodoProx = MovimientoRuta[x+1];
+    while(CriterioAceptacion < 10){
 
-        if(NodoActual == NodoOrigen)
-            NodoActual = 0;
+        S_current = S_new;
+        S_best = S_current;
 
-        if(NodoProx == NodoOrigen)
-            NodoProx = 0;
+        RutaPerturbada = Perturbacion(NewRutas, CantidadNodos);
 
-        S_new = S_new + MatrizDistancias[NodoActual][NodoProx];
+        for(i=0;i<NumIteraciones;i++){
+            ContFactibilidad = 0;
+            while(true){
+                
+                // Se realiza el movimiento a la solucion actual
+                MovimientoRuta = Movimiento(RutaPerturbada, CantidadNodos);
 
-    }
-    cout << S_new << endl;
-    S_current = S_new;
-    S_best = S_current;
-    // Segundo Simulated Annealing
-    for(i=0;i<NumIteraciones;i++){
+                // Se verifica si la solución es factible
+                Factible = VerificarRestricciones(MovimientoRuta, ArregloCapacidadesCamiones, ArregloProducciones, Demanda);
+                
+                if(Factible == 1)
+                    break;
+                else if(Factible == 0 && ContFactibilidad == 1000){
+                    MovimientoRuta = RutaPerturbada;
+                    break;
+                }
+                ContFactibilidad++;
+            }
 
-        while(true){
-            // Se realiza el movimiento a la solucion actual
-            MovimientoRuta = Movimiento(RutaPerturbada, CantidadNodos);
+            S_new = 0;
 
-            // Se verifica si la solución es factible
-            Factible = VerificarRestricciones(MovimientoRuta, ArregloCapacidadesCamiones, ArregloProducciones, Demanda);
+            // Se obtiene la funcion de evaluacion de la solucion con el movimiento aplicado
+            for(x=0; (unsigned)x<MovimientoRuta.size()-1; x++){
 
-            if(Factible == 1)
-                break;
+                NodoActual = MovimientoRuta[x];
+                NodoProx = MovimientoRuta[x+1];
+
+                if(NodoActual == NodoOrigen)
+                    NodoActual = 0;
+
+                if(NodoProx == NodoOrigen)
+                    NodoProx = 0;
+
+                S_new = S_new + MatrizDistancias[NodoActual][NodoProx];
+
+            }
+
+            // Si la nueva solucion es mejor que la actual, la solucion actual pasa a tomar el valor de la nueva
+            if(S_new < S_current)
+                S_current = S_new;
+
+            // Si un numero aleatorio entre 0 y 1 es menor a e^(delta eval / T), la solucion actual pasa a tomar el valor de la nueva
+            else if(float_rand(0,1) < exp(-(S_new-S_current)/T))
+                S_current = S_new;
+
+            // Si la solucion actual es mejor que la mejor hasta el momento, la mejor solucion pasa a tomar el valor de la actual
+            if(S_current < S_best){
+                S_best = S_current;
+                NewRutas.clear();
+                NewRutas = MovimientoRuta;
+            }
+
+            cont++;
+
+            // Actualizacion de la temperatura segun la tasa de decrecimiento
+            if(cont == CambioTemperatura){
+                T = T * TasaDecrecimiento;
+                cont = 0;
+            }
+
         }
 
-        S_new = 0;
-        
-        // Se obtiene la funcion de evaluacion de la solucion con el movimiento aplicado
-        for(x=0; (unsigned)x<MovimientoRuta.size()-1; x++){
-
-            NodoActual = MovimientoRuta[x];
-            NodoProx = MovimientoRuta[x+1];
-
-            if(NodoActual == NodoOrigen)
-                NodoActual = 0;
-
-            if(NodoProx == NodoOrigen)
-                NodoProx = 0;
-
-            S_new = S_new + MatrizDistancias[NodoActual][NodoProx];
-
+        if(S_best < MejorFuncionEvaluacion){
+            MejorRuta = NewRutas;
+            MejorFuncionEvaluacion = S_best;
         }
-
-        // Si la nueva solucion es mejor que la actual, la solucion actual pasa a tomar el valor de la nueva
-        if(S_new < S_current)
-            S_current = S_new;
-
-        // Si un numero aleatorio entre 0 y 1 es menor a e^(delta eval / T), la solucion actual pasa a tomar el valor de la nueva
-        else if(float_rand(0,1) < exp(-(S_new-S_current)/T))
-            S_current = S_new;
-
-        // Si la solucion actual es mejor que la mejor hasta el momento, la mejor solucion pasa a tomar el valor de la actual
-        if(S_current < S_best){
-            S_best = S_current;
-            NewRutas.clear();
-            NewRutas = MovimientoRuta;
-        }
-
-        cont++;
-
-        // Actualizacion de la temperatura segun la tasa de decrecimiento
-        if(cont == CambioTemperatura){
-            T = T * TasaDecrecimiento;
-            cont = 0;
-        }
-
+        CriterioAceptacion++;
     }
-
-    FuncionEvaluacion = S_best;
-    for(i=0;i<NewRutas.size();i++){
-        cout << NewRutas[i] << "-";
-    }
-    cout << FuncionEvaluacion << endl;
 
     // Calculo de la cantidad de leche recogida por ruta
     CantidadLecheRutas.clear();
-    CantidadLecheRutas = CalculoProduccion(NewRutas, ArregloProducciones);
+    CantidadLecheRutas = CalculoProduccion(MejorRuta, ArregloProducciones);
     
     // Calculo de la cantidad total de leche recogida
     CantidadRecogida = 0;
@@ -654,13 +652,13 @@ int main(int argc, char **argv){
     
     // Calculo de la distancia recorrida por ruta
     int DistRuta = 0;
-    NodoOrigen = NewRutas[0];
+    NodoOrigen = MejorRuta[0];
     DistanciaRutas.clear();
     
-    for(i=0; (unsigned)i<NewRutas.size()-1; i++){
+    for(i=0; (unsigned)i<MejorRuta.size()-1; i++){
 
-        NodoActual = NewRutas[i];
-        NodoProx = NewRutas[i+1];
+        NodoActual = MejorRuta[i];
+        NodoProx = MejorRuta[i+1];
 
         if(NodoActual == NodoOrigen && i != 0){
             NodoActual = 0;
@@ -685,21 +683,21 @@ int main(int argc, char **argv){
     string NombreSalida = NombreInstancia.substr(0, NombreInstancia.find(delimiter));
 
     Salida.open("./Salidas/" + NombreSalida + ".out");
-    Salida << "Funcion de evaluacion: " << FuncionEvaluacion << " / Cantidad total recogida: " << CantidadRecogida << " / Numero de rutas: " << CantidadRutas << "\n";
+    Salida << "Funcion de evaluacion: " << MejorFuncionEvaluacion << " / Cantidad total recogida: " << CantidadRecogida << " / Numero de rutas: " << CantidadRutas << "\n";
     Salida << NodoOrigen << "-";
 
-    for(i=1;(unsigned)i<NewRutas.size();i++){
-        if(NewRutas[i] == NodoOrigen){
+    for(i=1;(unsigned)i<MejorRuta.size();i++){
+        if(MejorRuta[i] == NodoOrigen){
             if(TerminoRuta != CantidadRutas - 1){
-                Salida << NewRutas[i] << " / Distancia: " << DistanciaRutas[TerminoRuta] << " / Cantidad recogida: " << CantidadLecheRutas[TerminoRuta] << "\n";
-                Salida << NewRutas[i] << "-";
+                Salida << MejorRuta[i] << " / Distancia: " << DistanciaRutas[TerminoRuta] << " / Cantidad recogida: " << CantidadLecheRutas[TerminoRuta] << "\n";
+                Salida << MejorRuta[i] << "-";
                 TerminoRuta++;
             }
             else
-                Salida << NewRutas[i] << " / Distancia: " << DistanciaRutas[TerminoRuta] << " / Cantidad recogida: " << CantidadLecheRutas[TerminoRuta];
+                Salida << MejorRuta[i] << " / Distancia: " << DistanciaRutas[TerminoRuta] << " / Cantidad recogida: " << CantidadLecheRutas[TerminoRuta];
         }
         else
-            Salida << NewRutas[i] << "-";
+            Salida << MejorRuta[i] << "-";
     }
 
     Salida.close();
