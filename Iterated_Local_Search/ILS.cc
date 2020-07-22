@@ -5,7 +5,7 @@
 
 using namespace std;
 
-int Seed, NumIteraciones, CambioTemperatura;
+int Seed, NumIteraciones, IteracionesILS, CambioTemperatura;
 string NombreInstancia;
 double T_0, TasaDecrecimiento;
 unsigned t0, t1;
@@ -17,7 +17,8 @@ void Capture_Params(int argc, char **argv){
     TasaDecrecimiento = atof(argv[3]);
     NumIteraciones = atoi(argv[4]);
     CambioTemperatura = atoi(argv[5]);
-    Seed = atoi(argv[6]);
+    IteracionesILS = atoi(argv[6]);
+    Seed = atoi(argv[7]);
 }
 
 // Funcion obtenida del GitLab del profesor Nicolas Rojas
@@ -557,22 +558,49 @@ int main(int argc, char **argv){
 
     // --------------------------------------------- Iterated Local Search --------------------------------------------- //
 
-    vector <int> RutaPerturbada;
+    vector <int> RutaPerturbada, aux;
     vector <int> MejorRuta = NewRutas;
-    RutaPerturbada = Perturbacion(NewRutas, CantidadNodos);
-    
+    while(true){
+        RutaPerturbada = Perturbacion(NewRutas, CantidadNodos);
+        Factible = VerificarRestricciones(RutaPerturbada, ArregloCapacidadesCamiones, ArregloProducciones, Demanda);
+        if(Factible == 1)
+            break;
+    }
+    for(x=0; (unsigned)x<RutaPerturbada.size()-1; x++){
+
+        NodoActual = RutaPerturbada[x];
+        NodoProx = RutaPerturbada[x+1];
+
+        if(NodoActual == NodoOrigen)
+            NodoActual = 0;
+
+        if(NodoProx == NodoOrigen)
+            NodoProx = 0;
+
+        S_new = S_new + MatrizDistancias[NodoActual][NodoProx];
+
+    }
+
+    aux = NewRutas;
+
     int MejorFuncionEvaluacion = FuncionEvaluacion;
     int CriterioAceptacion = 0, ContFactibilidad = 0;
 
-    while(CriterioAceptacion < 10){
+    while(CriterioAceptacion < IteracionesILS){
 
         S_current = S_new;
         S_best = S_current;
 
-        RutaPerturbada = Perturbacion(NewRutas, CantidadNodos);
+        while(true){
+            RutaPerturbada = Perturbacion(NewRutas, CantidadNodos);
+            Factible = VerificarRestricciones(RutaPerturbada, ArregloCapacidadesCamiones, ArregloProducciones, Demanda);
+            if(Factible == 1)
+                break;
+        }
 
         for(i=0;i<NumIteraciones;i++){
             ContFactibilidad = 0;
+
             while(true){
                 
                 // Se realiza el movimiento a la solucion actual
@@ -583,8 +611,9 @@ int main(int argc, char **argv){
                 
                 if(Factible == 1)
                     break;
-                else if(Factible == 0 && ContFactibilidad == 1000){
-                    MovimientoRuta = RutaPerturbada;
+                    
+                else if(Factible == 0 && ContFactibilidad == 20){
+                    MovimientoRuta = aux;
                     break;
                 }
                 ContFactibilidad++;
